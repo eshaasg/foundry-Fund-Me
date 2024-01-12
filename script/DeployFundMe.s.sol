@@ -6,10 +6,12 @@ pragma solidity ^0.8.18;
  import {FundMe} from "../src/FundMe.sol";
 
 
+
 contract DeployFundMe is Script {
-function run() external {
-    vm.startBroadcast();
-    new FundMe();
-    vm.stopBroadcast();
-}
+  function run() external {
+            vm.startBroadcast();
+             new FundMe();
+            vm.stopBroadcast();
+
+      }
 }

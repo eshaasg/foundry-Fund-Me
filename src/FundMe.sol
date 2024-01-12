@@ -4,7 +4,7 @@ pragma solidity ^0.8.18;
 import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import {PriceConverter} from "./PriceConverter.sol";
 
-error FundMe_NotOwner();
+error NotOwner();
 
 contract FundMe {
     using PriceConverter for uint256;
@@ -16,30 +16,26 @@ contract FundMe {
     address public /* immutable */ i_owner;
     uint256 public constant MINIMUM_USD = 5 * 10 ** 18;
     AggregatorV3Interface private s_priceFeed;
-
-    constructor(address priceFeed) {
+    
+    constructor() {
         i_owner = msg.sender;
-        s_priceFeed = AggregatorV3Interface(priceFeed);
     }
 
     function fund() public payable {
-        require(
-            msg.value.getConversionRate() >= MINIMUM_USD, 
-            "You need to spend more ETH!"
-            );
+        require(msg.value.getConversionRate() >= MINIMUM_USD, "You need to spend more ETH!");
         // require(PriceConverter.getConversionRate(msg.value) >= MINIMUM_USD, "You need to spend more ETH!");
         addressToAmountFunded[msg.sender] += msg.value;
         funders.push(msg.sender);
-
     }
     
     function getVersion() public view returns (uint256){
-    return s_priceFeed.version();
+        AggregatorV3Interface priceFeed = AggregatorV3Interface(0x694AA1769357215DE4FAC081bf1f309aDC325306);
+        return priceFeed.version();
     }
     
     modifier onlyOwner {
         // require(msg.sender == owner);
-        if (msg.sender != i_owner) revert FundMe_NotOwner();
+        if (msg.sender != i_owner) revert NotOwner();
         _;
     }
     
@@ -60,7 +56,7 @@ contract FundMe {
         (bool callSuccess, ) = payable(msg.sender).call{value: address(this).balance}("");
         require(callSuccess, "Call failed");
     }
-    // Explainer from: https://solidity-by-example.org/fallback/
+
     // Ether is sent to contract
     //      is msg.data empty?
     //          /   \ 
@@ -79,16 +75,11 @@ contract FundMe {
     receive() external payable {
         fund();
     }
+     
+    function getPriceFeed() public view
+      returns (AggregatorV3Interface) {
+        return s_priceFeed;
+
+    }
 
 }
-
-// Concepts we didn't cover yet (will cover in later sections)
-// 1. Enum
-// 2. Events
-// 3. Try / Catch
-// 4. Function Selector
-// 5. abi.encode / decode
-// 6. Hash with keccak256
-// 7. Yul / Assembly
-
-
